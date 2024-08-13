@@ -1,46 +1,41 @@
-from flask import Flask, render_template
+import random
+import uuid
+from flask import Flask, json, redirect, render_template, request, url_for
 
 app = Flask(__name__)
-
-blog_posts = [
-    {
-        "id": 1,
-        "author": "John Doe",
-        "title": "First Post",
-        "content": "This is my first post.",
-    },
-    {
-        "id": 2,
-        "author": "Jane Doe",
-        "title": "Second Post",
-        "content": "This is another post.",
-    },
-    {
-        "id": 3,
-        "author": "John Doe",
-        "title": "Third Post",
-        "content": "This is yet another post.",
-    },
-    {
-        "id": 4,
-        "author": "Jane Doe",
-        "title": "Fourth Post",
-        "content": "This is the last post.",
-    },
-    {
-        "id": 5,
-        "author": "John Doe",
-        "title": "Fifth Post",
-        "content": "This is the fifth post.",
-    }
-]
 
 
 @app.route("/")
 def index():
-    # add code here to fetch the job posts from a file
+    with open("storage/blog_data.json") as user_file:
+        blog_posts = json.load(user_file)
     return render_template("index.html", posts=blog_posts)
 
 
+@app.route("/add", methods=["GET", "POST"])
+def add():
+    if request.method == "POST":
+        post = {
+            "id": uuid.uuid4().hex,
+            "author": request.form["author"],
+            "title": request.form["title"],
+            "content": request.form["content"],
+        }
+
+        with open("storage/blog_data.json", "r") as user_file:
+            blog_posts = json.load(user_file)
+
+        blog_posts.append(post)
+
+        with open("storage/blog_data.json", "w") as user_file:
+            json.dump(blog_posts, user_file, indent=4)
+
+        return redirect(url_for("index"))
+
+        # add code here to save the job post to a file
+        return redirect("/")
+    return render_template("add.html")
+
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(port=5000, debug=True)
