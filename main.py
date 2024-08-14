@@ -2,8 +2,11 @@ import uuid
 from abc import ABC, abstractmethod
 from pathlib import Path
 from flask import Flask, flash, get_flashed_messages, json, redirect, render_template, request, url_for
+import os
 
 app = Flask(__name__)
+app.secret_key = os.urandom(24)
+
 
 
 class PostInterface(ABC):
@@ -14,11 +17,12 @@ class PostInterface(ABC):
 
 
 class BlogPost(PostInterface):
-    def __init__(self, author, title, content, id=None):
+    def __init__(self, author, title, content, id=None, likes=0):
         self.id = id or uuid.uuid4().hex
         self.author = author
         self.title = title
         self.content = content
+        self.likes = likes
 
     def to_dict(self):
         """Convert the blog post to a dictionary."""
@@ -27,6 +31,7 @@ class BlogPost(PostInterface):
             "author": self.author,
             "title": self.title,
             "content": self.content,
+            "likes": self.likes,
         }
 
 
@@ -98,7 +103,17 @@ class BlogManager(BlogManagerInterface):
                 post.content = content
                 self.save_posts(posts)
                 return True
-        return False 
+        return False
+    
+    def like_post(self, post_id):
+        """Like a blog post by ID."""
+        posts = self.load_posts()
+        for post in posts:
+            if post.id == post_id:
+                post.likes += 1
+                self.save_posts(posts)
+                return True
+        return False
 
 
 # Initialize BlogManager with the path to the JSON file 
@@ -130,7 +145,9 @@ def add():
 
 @app.route("/delete/<string:post_id>", methods=["POST"])
 def delete(post_id):
-    blog_manager.delete_post(post_id)
+    success = blog_manager.delete_post(post_id)
+    if not success:
+        return render_template("error.html", message="Post not found.")
     return redirect(url_for("index"))
 
 
@@ -160,6 +177,12 @@ def update(post_id):
 
     return render_template("error.html", message="Post not found.")
 
+@app.route("/like/<string:post_id>", methods=["POST"])
+def like(post_id):
+    success = blog_manager.like_post(post_id)
+    if not success:
+        return render_template("error.html", message="Post not found.")
+    return redirect(url_for("index"))
 
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
