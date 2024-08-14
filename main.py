@@ -5,11 +5,13 @@ from flask import Flask, json, redirect, render_template, request, url_for
 
 app = Flask(__name__)
 
+
 class PostInterface(ABC):
     @abstractmethod
     def to_dict(self):
         """Convert the post to a dictionary."""
         pass
+
 
 class BlogPost(PostInterface):
     def __init__(self, author, title, content, id=None):
@@ -26,6 +28,7 @@ class BlogPost(PostInterface):
             "title": self.title,
             "content": self.content,
         }
+
 
 # Step 3: Modify BlogManager to use the BlogPost class
 class BlogManager:
@@ -59,13 +62,16 @@ class BlogManager:
         posts = [post for post in posts if post.id != post_id]
         self.save_posts(posts)
 
+
 # Initialize BlogManager with the path to the JSON file
 blog_manager = BlogManager("storage/blog_data.json")
+
 
 @app.route("/")
 def index():
     blog_posts = blog_manager.load_posts()
     return render_template("index.html", posts=[post.to_dict() for post in blog_posts])
+
 
 @app.route("/add", methods=["GET", "POST"])
 def add():
@@ -79,10 +85,12 @@ def add():
 
     return render_template("add.html")
 
+
 @app.route("/delete/<string:post_id>", methods=["POST"])
 def delete(post_id):
     blog_manager.delete_post(post_id)
     return redirect(url_for("index"))
+
 
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
