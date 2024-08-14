@@ -33,8 +33,22 @@ def add():
         return redirect(url_for("index"))
 
         # add code here to save the job post to a file
-        return redirect("/")
     return render_template("add.html")
+
+
+@app.route("/delete/<string:post_id>", methods=["POST"])
+def delete(post_id):
+    with open("storage/blog_data.json", "r") as user_file:
+        blog_posts = json.load(user_file)
+
+    for post in blog_posts:
+        if post["id"] == post_id:
+            blog_posts.remove(post)
+
+    with open("storage/blog_data.json", "w") as user_file:
+        json.dump(blog_posts, user_file, indent=4)
+
+    return redirect(url_for("index"))
 
 
 if __name__ == "__main__":
