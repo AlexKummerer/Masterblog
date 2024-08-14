@@ -1,7 +1,7 @@
 import uuid
 from abc import ABC, abstractmethod
 from pathlib import Path
-from flask import Flask, json, redirect, render_template, request, url_for
+from flask import Flask, flash, get_flashed_messages, json, redirect, render_template, request, url_for
 
 app = Flask(__name__)
 
@@ -98,29 +98,32 @@ class BlogManager(BlogManagerInterface):
                 post.content = content
                 self.save_posts(posts)
                 return True
-        return False
+        return False 
 
 
-# Initialize BlogManager with the path to the JSON file
+# Initialize BlogManager with the path to the JSON file 
 blog_manager = BlogManager("storage/blog_data.json")
 
 
 @app.route("/")
 def index():
     blog_posts = blog_manager.load_posts()
-    return render_template("index.html", posts=[post.to_dict() for post in blog_posts])
+    messages = get_flashed_messages(with_categories=True)
+    return render_template("index.html", posts=[post.to_dict() for post in blog_posts], messages=messages)
 
 
 @app.route("/add", methods=["GET", "POST"])
 def add():
     if request.method == "POST":
         if not validate_form_data(request.form):
-            return render_template("error.html", message="All fields are required.")
+            flash("All fields are required.", "error")
+            return render_template("add.html")
         blog_manager.add_post(
             author=request.form["author"],
             title=request.form["title"],
             content=request.form["content"],
         )
+        flash("Post added successfully!", "success")
         return redirect(url_for("index"))
     return render_template("add.html")
 
