@@ -1,12 +1,20 @@
 import uuid
 from abc import ABC, abstractmethod
 from pathlib import Path
-from flask import Flask, flash, get_flashed_messages, json, redirect, render_template, request, url_for
+from flask import (
+    Flask,
+    flash,
+    get_flashed_messages,
+    json,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 import os
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
-
 
 
 class PostInterface(ABC):
@@ -90,8 +98,14 @@ class BlogManager(BlogManagerInterface):
     def delete_post(self, post_id):
         """Delete a blog post by ID."""
         posts = self.load_posts()
+        original_count = len(posts)
         posts = [post for post in posts if post.id != post_id]
+
+        if len(posts) == original_count:
+            return False  # Post not found
+
         self.save_posts(posts)
+        return True
 
     def update_post(self, post_id, author, title, content):
         """Update a blog post by ID."""
@@ -104,7 +118,7 @@ class BlogManager(BlogManagerInterface):
                 self.save_posts(posts)
                 return True
         return False
-    
+
     def like_post(self, post_id):
         """Like a blog post by ID."""
         posts = self.load_posts()
@@ -116,7 +130,7 @@ class BlogManager(BlogManagerInterface):
         return False
 
 
-# Initialize BlogManager with the path to the JSON file 
+# Initialize BlogManager with the path to the JSON file
 blog_manager = BlogManager("storage/blog_data.json")
 
 
@@ -124,7 +138,9 @@ blog_manager = BlogManager("storage/blog_data.json")
 def index():
     blog_posts = blog_manager.load_posts()
     messages = get_flashed_messages(with_categories=True)
-    return render_template("index.html", posts=[post.to_dict() for post in blog_posts], messages=messages)
+    return render_template(
+        "index.html", posts=[post.to_dict() for post in blog_posts], messages=messages
+    )
 
 
 @app.route("/add", methods=["GET", "POST"])
@@ -147,7 +163,9 @@ def add():
 def delete(post_id):
     success = blog_manager.delete_post(post_id)
     if not success:
-        return render_template("error.html", message="Post not found.")
+        flash("Post not found.", "error")
+        return redirect(url_for("index"))
+    flash("Post deleted successfully!", "success")
     return redirect(url_for("index"))
 
 
@@ -159,15 +177,21 @@ def validate_form_data(form):
 def update(post_id):
     if request.method == "POST":
         if not validate_form_data(request.form):
-            return render_template("error.html", message="All fields are required.")
+            flash("All fields are required.", "error")
+            return redirect(url_for("update", post_id=post_id))
+
         success = blog_manager.update_post(
             post_id,
             author=request.form["author"],
             title=request.form["title"],
             content=request.form["content"],
         )
+
         if not success:
-            return render_template("error.html", message="Post not found.")
+            flash("Post not found.", "error")
+            return redirect(url_for("index"))
+
+        flash("Post updated successfully!", "success")
         return redirect(url_for("index"))
 
     posts = blog_manager.load_posts()
@@ -175,14 +199,20 @@ def update(post_id):
         if post.id == post_id:
             return render_template("update.html", post=post.to_dict())
 
-    return render_template("error.html", message="Post not found.")
+    flash("Post not found.", "error")
+    return redirect(url_for("index"))
+
 
 @app.route("/like/<string:post_id>", methods=["POST"])
 def like(post_id):
     success = blog_manager.like_post(post_id)
     if not success:
-        return render_template("error.html", message="Post not found.")
+        flash("Post not found.", "error")
+        return redirect(url_for("index"))
+
+    flash("Post liked!", "success")
     return redirect(url_for("index"))
+
 
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
