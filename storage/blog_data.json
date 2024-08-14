@@ -1,7 +1,7 @@
 [
     {
         "author": "John Doe",
-        "content": "This is my first post.",
+        "content": "Cahgned Content",
         "id": "1",
         "title": "First Post"
     },
@@ -10,12 +10,6 @@
         "content": "This is yet another post.",
         "id": "3",
         "title": "Third Post"
-    },
-    {
-        "author": "Jane Doe",
-        "content": "This is the last post.",
-        "id": "4",
-        "title": "Fourth Post"
     },
     {
         "author": "Ron Rodrigo",
