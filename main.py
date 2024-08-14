@@ -30,8 +30,34 @@ class BlogPost(PostInterface):
         }
 
 
-# Step 3: Modify BlogManager to use the BlogPost class
-class BlogManager:
+class BlogManagerInterface(ABC):
+    @abstractmethod
+    def load_posts(self):
+        """Load blog posts from storage."""
+        pass
+
+    @abstractmethod
+    def save_posts(self, posts):
+        """Save blog posts to storage."""
+        pass
+
+    @abstractmethod
+    def add_post(self, author, title, content):
+        """Add a new blog post."""
+        pass
+
+    @abstractmethod
+    def delete_post(self, post_id):
+        """Delete a blog post by ID."""
+        pass
+
+    @abstractmethod
+    def update_post(self, post_id, author, title, content):
+        """Update a blog post by ID."""
+        pass
+
+
+class BlogManager(BlogManagerInterface):
     def __init__(self, file_path):
         self.file_path = Path(file_path)
 
@@ -62,6 +88,18 @@ class BlogManager:
         posts = [post for post in posts if post.id != post_id]
         self.save_posts(posts)
 
+    def update_post(self, post_id, author, title, content):
+        """Update a blog post by ID."""
+        posts = self.load_posts()
+        for post in posts:
+            if post.id == post_id:
+                post.author = author
+                post.title = title
+                post.content = content
+                self.save_posts(posts)
+                return True
+        return False
+
 
 # Initialize BlogManager with the path to the JSON file
 blog_manager = BlogManager("storage/blog_data.json")
@@ -76,13 +114,14 @@ def index():
 @app.route("/add", methods=["GET", "POST"])
 def add():
     if request.method == "POST":
+        if not validate_form_data(request.form):
+            return render_template("error.html", message="All fields are required.")
         blog_manager.add_post(
             author=request.form["author"],
             title=request.form["title"],
             content=request.form["content"],
         )
         return redirect(url_for("index"))
-
     return render_template("add.html")
 
 
@@ -90,6 +129,33 @@ def add():
 def delete(post_id):
     blog_manager.delete_post(post_id)
     return redirect(url_for("index"))
+
+
+def validate_form_data(form):
+    return all(form.get(field) for field in ["author", "title", "content"])
+
+
+@app.route("/update/<string:post_id>", methods=["GET", "POST"])
+def update(post_id):
+    if request.method == "POST":
+        if not validate_form_data(request.form):
+            return render_template("error.html", message="All fields are required.")
+        success = blog_manager.update_post(
+            post_id,
+            author=request.form["author"],
+            title=request.form["title"],
+            content=request.form["content"],
+        )
+        if not success:
+            return render_template("error.html", message="Post not found.")
+        return redirect(url_for("index"))
+
+    posts = blog_manager.load_posts()
+    for post in posts:
+        if post.id == post_id:
+            return render_template("update.html", post=post.to_dict())
+
+    return render_template("error.html", message="Post not found.")
 
 
 if __name__ == "__main__":
