@@ -12,9 +12,14 @@ from flask import (
     url_for,
 )
 import os
+from flask_wtf.csrf import CSRFProtect
+
+from forms import BlogPostForm
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
+csrf = CSRFProtect(app)
+csrf.init_app(app)
 
 
 class PostInterface(ABC):
@@ -138,25 +143,31 @@ blog_manager = BlogManager("storage/blog_data.json")
 def index():
     blog_posts = blog_manager.load_posts()
     messages = get_flashed_messages(with_categories=True)
+    form = BlogPostForm()  # Or create a simple form for the CSRF token
     return render_template(
-        "index.html", posts=[post.to_dict() for post in blog_posts], messages=messages
+        "index.html",
+        posts=[post.to_dict() for post in blog_posts],
+        messages=messages,
+        form=form,
     )
 
 
 @app.route("/add", methods=["GET", "POST"])
 def add():
-    if request.method == "POST":
-        if not validate_form_data(request.form):
-            flash("All fields are required.", "error")
-            return render_template("add.html")
+    form = BlogPostForm()
+    if form.validate_on_submit():
         blog_manager.add_post(
-            author=request.form["author"],
-            title=request.form["title"],
-            content=request.form["content"],
+            author=form.author.data,
+            title=form.title.data,
+            content=form.content.data,
         )
         flash("Post added successfully!", "success")
         return redirect(url_for("index"))
-    return render_template("add.html")
+
+    if form.errors:
+        flash("Please correct the errors in the form.", "error")
+
+    return render_template("add.html", form=form)
 
 
 @app.route("/delete/<string:post_id>", methods=["POST"])
@@ -175,16 +186,13 @@ def validate_form_data(form):
 
 @app.route("/update/<string:post_id>", methods=["GET", "POST"])
 def update(post_id):
-    if request.method == "POST":
-        if not validate_form_data(request.form):
-            flash("All fields are required.", "error")
-            return redirect(url_for("update", post_id=post_id))
-
+    form = BlogPostForm()
+    if form.validate_on_submit():
         success = blog_manager.update_post(
             post_id,
-            author=request.form["author"],
-            title=request.form["title"],
-            content=request.form["content"],
+            author=form.author.data,
+            title=form.title.data,
+            content=form.content.data,
         )
 
         if not success:
@@ -197,7 +205,10 @@ def update(post_id):
     posts = blog_manager.load_posts()
     for post in posts:
         if post.id == post_id:
-            return render_template("update.html", post=post.to_dict())
+            form.author.data = post.author
+            form.title.data = post.title
+            form.content.data = post.content
+            return render_template("update.html", form=form, post=post.to_dict())
 
     flash("Post not found.", "error")
     return redirect(url_for("index"))

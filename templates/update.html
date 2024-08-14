@@ -1,27 +1,39 @@
+<!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Update Blog Post</title>
     <link
-    rel="stylesheet"
-    href="{{ url_for('static', filename='style.css') }}"
-  />
-</head>
-<body>
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body>
     <h1>Update Blog Post</h1>
 
     <form action="{{ url_for('update', post_id=post['id']) }}" method="POST">
-        <label for="author">Author:</label><br>
-        <input type="text" id="author" name="author" value="{{ post['author'] }}"><br>
+      {{ form.hidden_tag() }}
 
-        <label for="title">Title:</label><br>
-        <input type="text" id="title" name="title" value="{{ post['title'] }}"><br>
+      <label for="author">Author:</label><br />
+      {{ form.author(size=32) }}<br />
+      {% for error in form.author.errors %}
+        <span style="color: red;">[{{ error }}]</span><br>
+      {% endfor %}
 
-        <label for="content">Content:</label><br>
-        <textarea id="content" name="content">{{ post['content'] }}</textarea><br>
+      <label for="title">Title:</label><br />
+      {{ form.title(size=32) }}<br />
+      {% for error in form.title.errors %}
+        <span style="color: red;">[{{ error }}]</span><br>
+      {% endfor %}
 
-        <input type="submit" value="Update">
+      <label for="content">Content:</label><br />
+      {{ form.content(cols=50, rows=10) }}<br />
+      {% for error in form.content.errors %}
+        <span style="color: red;">[{{ error }}]</span><br>
+      {% endfor %}
+
+      <input type="submit" value="Update" />
     </form>
-</body>
+  </body>
 </html>

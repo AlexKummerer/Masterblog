@@ -8,22 +8,29 @@
   <body>
     <h1>Add New Blog Post</h1>
 
-    <form method="post" action="/add">
-      <label for="author">Author:</label>
-      <input type="text" id="author" name="author" required /><br /><br />
+    <form method="post" action="{{ url_for('add') }}">
+      {{ form.hidden_tag() }}
 
-      <label for="title">Title:</label>
-      <input type="text" id="title" name="title" required /><br /><br />
+      <label for="author">Author:</label><br />
+      {{ form.author(size=32) }}<br />
+      {% for error in form.author.errors %}
+      <span style="color: red">[{{ error }}]</span><br />
+      {% endfor %}
+      <br />
 
-      <label for="content">Content:</label>
-      <textarea
-        id="content"
-        name="content"
-        rows="4"
-        cols="50"
-        required
-      ></textarea
-      ><br /><br />
+      <label for="title">Title:</label><br />
+      {{ form.title(size=32) }}<br />
+      {% for error in form.title.errors %}
+      <span style="color: red">[{{ error }}]</span><br />
+      {% endfor %}
+      <br />
+
+      <label for="content">Content:</label><br />
+      {{ form.content(cols=50, rows=10) }}<br />
+      {% for error in form.content.errors %}
+      <span style="color: red">[{{ error }}]</span><br />
+      {% endfor %}
+      <br />
 
       <button type="submit">Add Post</button>
     </form>

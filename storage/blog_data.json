@@ -1,23 +1,23 @@
 [
     {
         "author": "John Doe",
-        "content": "Cahgned Content",
+        "content": "Cahgned Content\r\nddwa",
         "id": "1",
-        "likes": 2,
+        "likes": 7,
         "title": "First Post"
     },
     {
         "author": "John Doe",
         "content": "This is yet another post.",
         "id": "3",
-        "likes": 1,
+        "likes": 3,
         "title": "Third Post"
     },
     {
         "author": "Ron Rodrigo",
         "content": "Die Wahrheit liegt im tun",
         "id": "acaf9515410343e9b3132c618965df32",
-        "likes": 1,
+        "likes": 2,
         "title": "Das Geheimnis"
     },
     {
